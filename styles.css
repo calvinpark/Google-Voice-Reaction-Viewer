@@ -1,0 +1,57 @@
+/* Google Voice Reaction Viewer — styles.
+ * State lives in data-gv-tapback-* attributes set by content.js; no classes are
+ * added to Google's elements. Selectors that touch Google's markup:
+ *   div.subject-content-container.bubble (position: relative on the live page)
+ *   div.message-row, div.full-container.incoming / .outgoing
+ */
+
+/* Badge strip on the reacted-to bubble: top corner, opposite the avatar side
+ * (where iMessage puts a tapback: top-left of a sent bubble, top-right of a received one). */
+.gv-tapback-badges {
+  position: absolute;
+  top: 0;
+  right: -6px;
+  display: inline-flex;
+  gap: 2px;
+  z-index: 1;
+  pointer-events: none;
+}
+div.full-container.outgoing .gv-tapback-badges {
+  right: auto;
+  left: -6px;
+}
+
+.gv-tapback-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* The text-only reaction row: kept, dimmed, smaller. */
+div.message-row[data-gv-tapback-dimmed] {
+  opacity: 0.45;
+  transition: opacity 120ms ease-out;
+}
+div.message-row[data-gv-tapback-dimmed] gv-annotation.content {
+  font-size: 0.85em;
+}
+
+/* Rows whose original is in the DOM scroll to it on click. */
+div.message-row[data-gv-tapback-linked] {
+  cursor: pointer;
+}
+div.message-row[data-gv-tapback-linked]:hover {
+  opacity: 0.8;
+}
+
+/* Highlight the original after a click. */
+@keyframes gv-tapback-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.9); }
+  100% { box-shadow: 0 0 0 12px rgba(26, 115, 232, 0); }
+}
+div.subject-content-container.bubble[data-gv-tapback-flash] {
+  animation: gv-tapback-flash 1.2s ease-out 2;
+}

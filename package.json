@@ -1,0 +1,18 @@
+{
+  "name": "google-voice-reaction-viewer",
+  "version": "0.1.1",
+  "private": true,
+  "description": "Firefox extension: renders iMessage tapback reactions as emoji badges in the Google Voice web app.",
+  "scripts": {
+    "test": "node --test",
+    "lint": "web-ext lint",
+    "build": "web-ext build",
+    "build:chrome": "node build-chrome.mjs",
+    "start": "web-ext run --firefox-profile gv-tapbacks-dev --profile-create-if-missing --keep-profile-changes",
+    "sign:unlisted": "web-ext sign --channel unlisted",
+    "sign:listed": "web-ext sign --channel listed"
+  },
+  "devDependencies": {
+    "web-ext": "^8.0.0"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "summary": {
+    "en-US": "Shows iMessage tapback reactions (Loved “…”, Liked “…”, Reacted 😂 to “…”) as emoji badges on the message they refer to in Google Voice, and dims the text-only reaction rows."
+  },
+  "description": {
+    "en-US": "iPhone users' tapback reactions reach Google Voice over SMS as plain text rows such as Loved “See you at the park at 3, bring the frisbee”. This extension finds those rows in the Google Voice web app, locates the message they quote, and places the matching emoji (❤️ 👍 👎 😂 ‼️ ❓ or an iOS 18 custom emoji) as a badge on that message. The text row stays visible but dimmed; clicking it scrolls to the quoted message. Removed reactions take the badge away.\n\nRender-only: it does not send reactions. It runs only on voice.google.com, uses no extension permissions beyond the content script, stores nothing, and makes no network requests."
+  },
+  "support_url": {
+    "en-US": "https://github.com/calvinpark/Google-Voice-Reaction-Viewer"
+  },
+  "categories": ["social-communication"],
+  "tags": ["google voice", "imessage", "tapback", "reactions"],
+  "version": {
+    "license": "MIT",
+    "release_notes": {
+      "en-US": "Reaction badges now sit at the top corner of the message bubble, where iMessage places a tapback. New icon."
+    },
+    "approval_notes": "Content script only; no background script, no permissions, no remote code. Test on a Google Voice conversation that contains an SMS row like: Loved “some earlier message text”."
+  }
+}

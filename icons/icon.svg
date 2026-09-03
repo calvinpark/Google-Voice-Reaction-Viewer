@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Google Voice Reaction Viewer icon. Original drawing in the style of the 2026 Google
+       Voice product logo (handset + quarter-disc), scaled to 0.92 and set to the right,
+       vertically centred, with a large bare heart emoji in the icon's upper-left corner,
+       flush with the left edge, where the extension puts a badge on a sent bubble.
+       Handset and heart outlines are Material Symbols paths (Apache-2.0). -->
+  <defs>
+    <linearGradient id="handset" gradientUnits="userSpaceOnUse" x1="3" y1="3" x2="21" y2="21">
+      <stop offset="0" stop-color="#8AB4F8"/>
+      <stop offset="0.42" stop-color="#4FB86B"/>
+      <stop offset="0.62" stop-color="#4FB86B"/>
+      <stop offset="1" stop-color="#8AB4F8"/>
+    </linearGradient>
+    <radialGradient id="disc" gradientUnits="userSpaceOnUse" cx="56" cy="72" r="66">
+      <stop offset="0" stop-color="#8EC9FF"/>
+      <stop offset="0.38" stop-color="#7DD3A2"/>
+      <stop offset="1" stop-color="#6CCB6E"/>
+    </radialGradient>
+    <linearGradient id="heart" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF5D62"/>
+      <stop offset="1" stop-color="#DE1F2A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- tile -->
+  <rect x="0" y="0" width="128" height="128" rx="26" fill="#F1F3F4"/>
+
+  <!-- Google Voice logo (quarter disc + handset); untransformed bbox x 12.5-119.8, y 8-124.8.
+       Scaled 0.92: x 25.3-124.0, y 10.3-117.7 -->
+  <g transform="translate(13.78 2.91) scale(0.92)">
+    <!-- quarter disc: right angle at bottom-left, arc toward top-right -->
+    <path d="M56 12 A60 60 0 0 1 116 72 L56 72 Z"
+          fill="url(#disc)" stroke="url(#disc)" stroke-width="8" stroke-linejoin="round"/>
+    <!-- handset -->
+    <g transform="translate(4 28) scale(4.4)">
+      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"
+            fill="url(#handset)" stroke="url(#handset)" stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- bare heart emoji in the icon's upper-left corner, flush with the left edge
+       (x 0-40, y 10-47) -->
+  <g transform="translate(-4 4.27) scale(2)">
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+          fill="url(#heart)"/>
+    <ellipse cx="7.6" cy="7.2" rx="2.2" ry="1.4" fill="#FFFFFF" opacity="0.35" transform="rotate(-25 7.6 7.2)"/>
+  </g>
+</svg>
