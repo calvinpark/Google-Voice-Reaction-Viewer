@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Reaction Viewer for Google Voice"
+  },
+  "extDesc": {
+    "message": "Shows iMessage tapback reactions as emoji badges on the reacted-to message in Google Voice and dims the text-only reaction rows."
+  }
+}

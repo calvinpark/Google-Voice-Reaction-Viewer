@@ -14,7 +14,7 @@
 (function (root) {
   'use strict';
 
-  const VERSION = '0.1.1';
+  const VERSION = '0.1.2';
   const TAG = '[gv-tapback]';
 
   const CONFIG = {
@@ -78,6 +78,66 @@
   const RX_REMOVAL = new RegExp('^Removed (.+?) from ' + QO + '([\\s\\S]+)' + QC + '$');
   const RX_ATTACHMENT = new RegExp('^(' + VERBS + ') an? (?:' + ATTACHMENT_NOUNS + ')$', 'i');
 
+  // ---- localized patterns (iPhones set to other languages send localized
+  // fallback text; the receiving side has no say). Confidence varies per
+  // language — see CLAUDE.md. A pattern that matches nothing is harmless:
+  // the row stays an ordinary message, which is the pre-localization behavior.
+  // Named groups: q = quoted original text, w = reaction word or emoji.
+  const LQO = '[“"«„「『‘\u309b]';   // opening quote marks seen in fallbacks
+  const LQC = '[”"»“」』’\u309b]';   // closing quote marks
+  function lre(src, flags) { return new RegExp(src.replace(/Qo/g, LQO).replace(/Qc/g, LQC), flags); }
+
+  const JA_WORDS = { 'ハート': '❤️', 'いいね': '👍', 'いいね!': '👍', 'いいね！': '👍', 'よくないね': '👎', '笑': '😂', '爆笑': '😂', '！！': '‼️', '!!': '‼️', '強調': '‼️', '？': '❓', '?': '❓', '疑問': '❓' };
+  const ZH_WORDS = { '爱心': '❤️', '喜爱': '❤️', '喜欢': '👍', '赞': '👍', '不喜欢': '👎', '哈哈': '😂', '笑': '😂', '强调': '‼️', '叹号': '‼️', '疑问': '❓', '问号': '❓' };
+
+  const LOCALIZED = [
+    // Spanish — formats seen in the wild: word form (optionally "A <name> le …")
+    // and the emoji form "Reaccionó con X a “…”".
+    { re: lre('^(?:A .{1,40} )?le encant(?:a|ó) Qo(?<q>[\\s\\S]+)Qc$', 'i'), kind: 'add', emoji: '❤️' },
+    { re: lre('^(?:A .{1,40} )?no le gust(?:a|ó) Qo(?<q>[\\s\\S]+)Qc$', 'i'), kind: 'add', emoji: '👎' },
+    { re: lre('^(?:A .{1,40} )?le gust(?:a|ó) Qo(?<q>[\\s\\S]+)Qc$', 'i'), kind: 'add', emoji: '👍' },
+    { re: lre('^Le (?:hace|hizo) gracia Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '😂' },
+    { re: lre('^Enfatiz(?:a|ó) Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '‼️' },
+    { re: lre('^(?:Cuestion(?:a|ó)|Pregunt(?:a|ó) por) Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '❓' },
+    { re: lre('^Reaccion(?:a|ó) con (?<w>\\S+) a Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add' },
+    { re: lre('^Quit(?:a|ó) (?<w>\\S+) de Qo(?<q>[\\s\\S]+)Qc$'), kind: 'remove' },
+    // Korean — quote first: “…” 메시지에 👍 반응 보냄 (emoji inline, any tapback).
+    { re: lre('^Qo(?<q>[\\s\\S]+)Qc 메시지에 (?<w>\\S+) 반응(?:을)? 보냄$'), kind: 'add' },
+    { re: lre('^Qo(?<q>[\\s\\S]+)Qc 메시지에 보낸 (?<w>\\S+) 반응(?:을)? 제거함?$'), kind: 'remove' },
+    // Japanese — quote first: “…”に「いいね」と応答 (named reaction or emoji in 「」).
+    { re: lre('^Qo(?<q>[\\s\\S]+)Qcに「(?<w>.+?)」と応答$'), kind: 'add', map: JA_WORDS },
+    { re: lre('^Qo(?<q>[\\s\\S]+)Qcへの応答を削除$'), kind: 'remove', emoji: null },
+    // French — mirrors the English verb forms.
+    { re: lre('^A adoré Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '❤️' },
+    { re: lre('^A aimé Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '👍' },
+    { re: lre("^N['’]a pas aimé Qo(?<q>[\\s\\S]+)Qc$"), kind: 'add', emoji: '👎' },
+    { re: lre('^A ri de Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '😂' },
+    { re: lre('^A souligné Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '‼️' },
+    { re: lre("^S['’]est interrogée? sur Qo(?<q>[\\s\\S]+)Qc$"), kind: 'add', emoji: '❓' },
+    { re: lre('^A réagi avec (?<w>\\S+) à Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add' },
+    // German.
+    { re: lre('^Hat Qo(?<q>[\\s\\S]+)Qc geliebt$'), kind: 'add', emoji: '❤️' },
+    { re: lre('^Hat Qo(?<q>[\\s\\S]+)Qc gemocht$'), kind: 'add', emoji: '👍' },
+    { re: lre('^Hat mit (?<w>\\S+) auf Qo(?<q>[\\s\\S]+)Qc reagiert$'), kind: 'add' },
+    // Italian.
+    { re: lre('^Ha adorato Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '❤️' },
+    { re: lre('^Ha apprezzato Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '👍' },
+    { re: lre('^Non ha apprezzato Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '👎' },
+    { re: lre('^Ha riso di Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '😂' },
+    { re: lre('^Ha enfatizzato Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '‼️' },
+    { re: lre('^Ha reagito con (?<w>\\S+) a Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add' },
+    // Portuguese.
+    { re: lre('^Amou Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '❤️' },
+    { re: lre('^(?:Curtiu|Gostou de) Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '👍' },
+    { re: lre('^Não (?:curtiu|gostou de) Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '👎' },
+    { re: lre('^Riu de Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '😂' },
+    { re: lre('^Enfatizou Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add', emoji: '‼️' },
+    { re: lre('^Reagiu com (?<w>\\S+) a Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add' },
+    // Simplified Chinese.
+    { re: lre('^对Qo(?<q>[\\s\\S]+)Qc表示(?<w>\\S+)$'), kind: 'add', map: ZH_WORDS },
+    { re: lre('^用(?<w>\\S+)回应了?Qo(?<q>[\\s\\S]+)Qc$'), kind: 'add' },
+  ];
+
   const RX_EMOJI_CHARS = /\p{Extended_Pictographic}|[\uFE0E\uFE0F\u200D\u20E3]|[\u{1F3FB}-\u{1F3FF}]/gu;
   const RX_ONLY_EMOJI = /^(?:\p{Extended_Pictographic}|[\uFE0E\uFE0F\u200D\u20E3]|[\u{1F3FB}-\u{1F3FF}])+$/u;
 
@@ -130,6 +190,21 @@
     if ((m = RX_ATTACHMENT.exec(text))) {
       const verb = Object.keys(STANDARD).find(function (v) { return v.toLowerCase() === m[1].toLowerCase(); });
       return { kind: 'attachment', emoji: STANDARD[verb], quote: null };
+    }
+    for (const p of LOCALIZED) {
+      m = p.re.exec(text);
+      if (!m) continue;
+      let emoji = p.emoji !== undefined ? p.emoji : null;
+      const w = m.groups && m.groups.w ? normalize(m.groups.w) : null;
+      if (w) {
+        if (p.map) emoji = p.map[w] || (RX_ONLY_EMOJI.test(w) ? w : null);
+        else emoji = RX_ONLY_EMOJI.test(w) ? w : null;
+        if (!emoji) continue; // not a known word and not an emoji: leave the row alone
+      }
+      const quote = m.groups && m.groups.q ? normalize(m.groups.q) : null;
+      if (p.kind === 'remove') return { kind: 'remove', emoji: emoji, quote: quote };
+      if (!emoji) continue;
+      return { kind: 'add', emoji: emoji, quote: quote };
     }
     return null;
   }

@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Google Voice 반응 뷰어"
+  },
+  "extDesc": {
+    "message": "iMessage 탭백 반응을 Google Voice의 해당 메시지 위에 이모지 배지로 표시하고, 텍스트로 온 반응 줄은 흐리게 표시합니다."
+  }
+}

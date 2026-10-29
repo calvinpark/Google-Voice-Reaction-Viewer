@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Google Voice 反应查看器"
+  },
+  "extDesc": {
+    "message": "在 Google Voice 中将 iMessage 的点按回应以表情徽章显示在对应消息上，并淡化纯文字回应行。"
+  }
+}

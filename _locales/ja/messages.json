@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Google Voice リアクションビューア"
+  },
+  "extDesc": {
+    "message": "iMessageのタップバック反応をGoogle Voiceの該当メッセージに絵文字バッジとして表示し、テキストの反応行は薄く表示します。"
+  }
+}

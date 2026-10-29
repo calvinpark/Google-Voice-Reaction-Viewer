@@ -1,0 +1,8 @@
+{
+  "extName": {
+    "message": "Reaktionsanzeige für Google Voice"
+  },
+  "extDesc": {
+    "message": "Zeigt iMessage-Reaktionen als Emoji-Badges an der zugehörigen Nachricht in Google Voice und dimmt die reinen Textzeilen."
+  }
+}

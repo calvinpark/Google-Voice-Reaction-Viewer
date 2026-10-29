@@ -34,7 +34,9 @@ and makes the dimmed row scroll to the original on click.
 
 ```
 manifest.json        MV3 manifest (Chrome/Brave, the main target); content script on
-                     https://voice.google.com/*; no permissions
+                     https://voice.google.com/*; no permissions; name/description via
+                     __MSG__ + _locales (en ko ja es fr de it pt_BR zh_CN), default en
+_locales/            store-listing name + summary translations (messages.json per locale)
 manifest.firefox.json MV2 manifest for Firefox/AMO; gecko id
                      {90091e07-01ce-012e-ac71-017071e77e12}; data_collection_permissions none
 content.js           everything: parsing, matching, badges, observer, loop protection
@@ -106,6 +108,17 @@ Removals (wording from recall, unverified): `Removed a heart|a like|a dislike|a 
 and `Removed <emoji> from “…”` → delete that badge
 Attachments (wording unverified): `Loved an image`, `Liked an attachment`, … → dim only
 A wrong string leaves the row untouched.
+
+Localized fallbacks (2026-10-29): the sender's iPhone language decides the wording,
+so content.js carries a LOCALIZED pattern table. Verified against real rows from
+Calvin's threads or web sources: Spanish `Le hace gracia “…”` / `(A <name> )le gustó
+“…”` / `le encanta` / `Reaccionó con <emoji> a “…”`; Korean `“…” 메시지에 <emoji>
+반응 보냄` (quote first, emoji inline for every tapback); Japanese `“…”に「<word>」と応答`
+with words ハート/いいね/よくないね/笑/？. Constructed by analogy, unverified: the
+rest of the Spanish set, all French/German/Italian/Portuguese/Chinese entries, the
+Japanese 爆笑/！！/強調 words, and every localized removal. Unknown word in a known
+format → row left untouched (same as before the table existed). Quote marks accepted:
+curly, straight, «», „", 「」『』, ゛.
 
 ## Matching
 
