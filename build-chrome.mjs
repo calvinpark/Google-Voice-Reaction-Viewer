@@ -16,7 +16,7 @@ const stage = 'dist/.chrome-stage';
 
 rmSync(stage, { recursive: true, force: true });
 mkdirSync(`${stage}/icons`, { recursive: true });
-for (const f of ['manifest.json', 'content.js', 'styles.css', 'LICENSE']) cpSync(f, `${stage}/${f}`);
+for (const f of ['manifest.json', 'patterns.js', 'content.js', 'styles.css', 'LICENSE']) cpSync(f, `${stage}/${f}`);
 for (const i of ['icon-48.png', 'icon-96.png', 'icon-128.png']) cpSync(`icons/${i}`, `${stage}/icons/${i}`);
 cpSync('_locales', `${stage}/_locales`, { recursive: true });
 rmSync(out, { force: true });

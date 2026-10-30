@@ -14,12 +14,16 @@ manifest.json        MV3 manifest for Chrome/Brave — the main target (content 
                      voice.google.com, no permissions; name "Reaction Viewer for Google Voice")
 manifest.firefox.json MV2 manifest for Firefox/AMO (gecko id; kept for the AMO listing)
 build-chrome.mjs     builds the Chrome Web Store zip from the root manifest (npm run build:chrome)
-content.js           the whole extension: parsing, matching, badges, loop protection
+content.js           the extension: parsing, matching, badges, loop protection
+patterns.js          generated reaction-wording tables (Apple, 44 languages; Google Messages,
+                     25) — regenerate with `node tools/gen-tables.mjs`, never edit by hand
+tools/gen-tables.mjs builds patterns.js from the raw strings in test/*.json
 styles.css           badge, dimmed rows, click-to-scroll highlight
 icons/               icon.svg source + 48/96/128 PNG (256 for listings)
 amo-metadata.json    listing metadata for `web-ext sign --amo-metadata`
 web-ext-config.mjs   web-ext defaults (ignore list, artifacts dir, sign channel)
-test/                node unit tests + headless Firefox integration test
+test/                node unit tests + headless Firefox integration test; the raw
+                     fallback strings (apple-tapback-fallbacks.json, google-messages-fallbacks.json)
 CLAUDE.md            design notes and DOM facts
 ```
 

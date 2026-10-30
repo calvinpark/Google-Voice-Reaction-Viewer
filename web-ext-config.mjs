@@ -6,6 +6,7 @@ export default {
   ignoreFiles: [
     'dist',
     'test',
+    'tools',
     'node_modules',
     'CLAUDE.md',
     'README.md',

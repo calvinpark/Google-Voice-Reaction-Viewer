@@ -34,18 +34,21 @@ and makes the dimmed row scroll to the original on click.
 
 ```
 manifest.json        MV3 manifest (Chrome/Brave, the main target); content script on
-                     https://voice.google.com/*; no permissions; name/description via
-                     __MSG__ + _locales (en ko ja es fr de it pt_BR zh_CN), default en
-_locales/            store-listing name + summary translations (messages.json per locale)
+                     https://voice.google.com/*; no permissions
 manifest.firefox.json MV2 manifest for Firefox/AMO; gecko id
                      {90091e07-01ce-012e-ac71-017071e77e12}; data_collection_permissions none
-content.js           everything: parsing, matching, badges, observer, loop protection
+content.js           parsing, matching, badges, observer, loop protection
+patterns.js          GENERATED wording tables (APPLE, APPLE_ATTACHMENT_GROUPS, REPLY_PREFIXES,
+                     GOOGLE_MESSAGES); loaded before content.js; never edited by hand
+tools/gen-tables.mjs writes patterns.js from the two JSON files below (`node tools/gen-tables.mjs`)
 styles.css           badge strip, dimmed rows, click-to-scroll flash
 icons/icon.svg       source; icon-48/96/128.png used by the manifest, icon-256.png for listings
 amo-metadata.json    listing metadata for `web-ext sign --amo-metadata`; license MIT
 web-ext-config.mjs   web-ext defaults: ignore list, dist/ artifacts, sign channel unlisted
 package.json         scripts: test (node --test), lint, build, start (web-ext run), sign:*
 test/parse.test.js   unit tests for parseReaction / textsEqual / normalize
+test/apple-tapback-fallbacks.json    Apple Messages' tapback/reply fallback strings, 44 locales (source data)
+test/google-messages-fallbacks.json  Google Messages' reaction fallback templates, 25 locales (source data)
 test/firefox_test.py headless Firefox integration test (Marionette, no deps); see below
 test/make_fixture.py generates test/fixtures/thread.html (synthetic thread, fake names)
 ```
@@ -100,25 +103,51 @@ State is stored in `data-gv-tapback-*` attributes on Google's elements, never in
 classes (Angular owns the class attribute). Every node the extension inserts carries
 `data-gv-tapback-ext`.
 
-## Reaction patterns (content.js `parseReaction`)
+## Reaction patterns (content.js `parseReaction`, tables in patterns.js)
 
-Standard: `Loved|Liked|Disliked|Laughed at|Emphasized|Questioned “…”` → ❤️ 👍 👎 😂 ‼️ ❓
-iOS 18 custom emoji: `Reacted <emoji> to “…”` → that emoji (wording verified; the emoji arrives as an img)
-Removals (wording from recall, unverified): `Removed a heart|a like|a dislike|a laugh|an exclamation|a question mark from “…”`,
-and `Removed <emoji> from “…”` → delete that badge
-Attachments (wording unverified): `Loved an image`, `Liked an attachment`, … → dim only
-A wrong string leaves the row untouched.
+Rows are normalized first (zero-width and direction marks removed, U+200D kept for
+emoji sequences; NBSP and whitespace runs → one space). Order of checks:
 
-Localized fallbacks (2026-10-29): the sender's iPhone language decides the wording,
-so content.js carries a LOCALIZED pattern table. Verified against real rows from
-Calvin's threads or web sources: Spanish `Le hace gracia “…”` / `(A <name> )le gustó
-“…”` / `le encanta` / `Reaccionó con <emoji> a “…”`; Korean `“…” 메시지에 <emoji>
-반응 보냄` (quote first, emoji inline for every tapback); Japanese `“…”に「<word>」と応答`
-with words ハート/いいね/よくないね/笑/？. Constructed by analogy, unverified: the
-rest of the Spanish set, all French/German/Italian/Portuguese/Chinese entries, the
-Japanese 爆笑/！！/強調 words, and every localized removal. Unknown word in a known
-format → row left untouched (same as before the table existed). Quote marks accepted:
-curly, straight, «», „", 「」『』, ゛.
+1. English fast path, verified 2026-10-30 against Apple's own strings (below):
+   `Loved|Liked|Disliked|Laughed at|Emphasized|Questioned “…”` → ❤️ 👍 👎 😂 ‼️ ❓;
+   iOS 18 custom emoji `Reacted <emoji> to “…”` (the emoji arrives as an img);
+   `Removed a heart|a like|a dislike|a laugh|an exclamation|a question mark|<emoji> from “…”`
+   → delete that badge; `Loved an image` … → dim only (lenient noun list).
+2. `APPLE_ATTACHMENTS` exact-string Map (dim only), then the `APPLE` and
+   `GOOGLE_MESSAGES` regex tables in that order. First match wins. A row no pattern
+   matches is an ordinary message — same as before the tables existed.
+
+Apple Messages (iPhone senders), verified 2026-10-30 from the sender side's own
+strings: `IMSharedUtilities.framework/Versions/A/Resources/IMSharedUtilities.loctable`
+on Calvin's Mac (framework 10.0 build 1000, macOS 26 SDK build 26A432); 44 locales,
+dumped to test/apple-tapback-fallbacks.json. For every locale: 6 fixed tapbacks + 1
+emoji template on a quoted text, 7 removals, 12 attachment kinds × 12 verbs (exact
+strings), and the reply line (`REPLIED_BACKWARD_COMPATIBILITY` = "Replied to a
+message:"), so the reply prefix seen live 2026-10-30 is Apple's, not Google's.
+Facts that shaped the tables: the quote marks are per locale (“” „“ «\xa0…\xa0» ‘’ 「」
+and straight '' in nl; zh_CN uses `赞了：…` with no quotes), the emoji slot is `%1$@`
+in ja/ko/zh_HK/zh_TW and the first `%@` elsewhere, fr and some removals end with a
+period. The generator turns each quote mark into a small class that also accepts the
+straight equivalent and makes a sentence-final period optional. One collision:
+`Gostou de “…”` is ❤️ in pt_BR and 👍 in pt_PT; pt_BR is listed first and wins.
+Not parsed (left as ordinary rows): the unquoted variants `Liked %@` (used for
+messages without a text summary; too greedy to match safely) and `Liked 1 %@ Message`.
+Earlier hand-written French/German/Italian/Portuguese/Chinese guesses were wrong
+(e.g. German is `Jemandem gefällt „…“`, not `Hat „…“ gemocht`) and are gone.
+Older iOS builds may word some strings differently; only this table is verified.
+
+Google Messages (Android senders), verified 2026-10-30 from the app's own string
+resources (com.google.android.apps.messaging build 20261022_03_RC00, APKPure
+bundle, all 25 locale splits; raw templates in test/google-messages-fallbacks.json):
+`\u200b%1$s\u200b to “\u200a%2$s\u200a”` adds, `Removed \u200c%1$s\u200c from
+“\u200a%2$s\u200a”` removes, plus per-attachment variants (photo/video/GIF/file/
+contact/audio/unknown) and photomoji rows. The invisible characters are IN Google's
+templates — U+200B/U+200C around the emoji, U+200A inside the quotes — and Google
+Voice shows them verbatim; normalize() strips them. The Korean hair-salon row
+(“…” 메시지에 👍 반응 보냄) is Google Messages' Korean template, not Apple's (Apple's
+Korean is ‘…’에 좋아요 표시함). 379 unique regexes.
+
+Cost: ~0.06 ms for an ordinary row, ~0.1 ms averaged over a mixed set (node, 2026-10-30).
 
 ## Matching
 
@@ -182,7 +211,15 @@ installs as a temporary add-on; test build (extra match `http://127.0.0.1/*`) ru
 the synthetic fixture: 14/14 checks, screenshot `test/fixtures/firefox-screenshot.png`.
 `web-ext lint`: 0 errors, 0 warnings, 0 notices. `node --test`: 8/8.
 Not verified: a real inbound reaction arriving while the extension is running; the
-removal and attachment wording; the extension in the maintainer's daily profile.
+extension in the maintainer's daily profile.
+
+2026-10-30 (container): `node --test` 44/44, including one test that fills all 8140
+Apple strings and one that fills all 450 Google templates and checks kind/emoji/quote
+per row; positive control — misspelling one German pattern in a scratch copy failed
+3 tests with the predicted label (`de add like text: no parse for …`). Chromium
+(Playwright, `--load-extension`, two content scripts) on a fixture mirroring the live
+markup: English, Spanish, Korean (Google wording), Google `😂 to “…”`, and German
+Apple rows (fixed tapback, reply-wrapped emoji-as-img, attachment) all matched/dimmed.
 
 Firefox match patterns ignore port numbers (bug 1362809); the fixture is served on
 port 80 for that reason.
@@ -203,7 +240,8 @@ port 80 for that reason.
 
 ## Development workflow
 
-1. Edit files in this repo.
+1. Edit files in this repo. Wording tables: edit the JSON in test/, then
+   `node tools/gen-tables.mjs` rewrites patterns.js (never edit patterns.js directly).
 2. `npm start` (web-ext run with the `gv-tapbacks-dev` profile, reloads on save), or
    `about:debugging` → This Firefox → Load Temporary Add-on → `manifest.json` (Reload
    after edits; gone on Firefox restart).

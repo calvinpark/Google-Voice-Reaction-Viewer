@@ -13,7 +13,7 @@
   "version": {
     "license": "MIT",
     "release_notes": {
-      "en-US": "Reads reaction texts in more languages: Spanish, Korean, Japanese, French, German, Italian, Portuguese, and Chinese."
+      "en-US": "Reads reaction texts in 44 languages, using Apple's own Messages wording; reads reactions and replies sent from Android phones (Google Messages, 25 languages); and fixes emoji reactions that arrived with invisible formatting characters."
     },
     "approval_notes": "Content script only; no background script, no permissions, no remote code. Test on a Google Voice conversation that contains an SMS row like: Loved “some earlier message text”."
   }
